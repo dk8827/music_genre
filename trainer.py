@@ -77,7 +77,7 @@ class ModelTrainer:
         callbacks = [
             EarlyStopping(monitor='val_accuracy', patience=10, restore_best_weights=True, verbose=1),
             ReduceLROnPlateau(monitor='val_loss', factor=0.3, patience=4, min_lr=1e-6, verbose=1),
-            PlotCallback() # This is from plotting_utils
+            # PlotCallback() # This is from plotting_utils
         ]
 
         print("Starting training...")
@@ -97,13 +97,13 @@ class ModelTrainer:
         print(f"Final Training Accuracy: {train_acc:.4f}, Loss: {train_loss:.4f}")
         print(f"Final Validation Accuracy: {val_acc:.4f}, Loss: {val_loss:.4f}")
 
-        plot_final_results(history) # This is from plotting_utils
+        # plot_final_results(history) # This is from plotting_utils
 
         y_pred_probs = self.model.predict(X_val_norm)
         y_pred_classes = np.argmax(y_pred_probs, axis=1)
 
         print("Classification Report:")
         print(classification_report(y_val_enc, y_pred_classes, target_names=self.label_encoder.classes_))
-        plot_confusion_matrix_standalone(y_val_enc, y_pred_classes, self.label_encoder.classes_) # This is from plotting_utils
+        # plot_confusion_matrix_standalone(y_val_enc, y_pred_classes, self.label_encoder.classes_) # This is from plotting_utils
 
         return history, self.model, self.train_mean, self.train_std 
