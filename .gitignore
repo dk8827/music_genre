@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.$py.class
+
+# Virtual environment
+music_genre_env/
+venv/
+env/
+.venv/
+.env/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Build and distribution
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# TensorFlow/Keras
+logs/
+tensorboard/
+
+# Cache and Model Files
+*.npz
+*.h5
+*.pkl
+*.joblib
+
+music_data/
+gtzan.tar.gz
+
+# Credentials
+*.env
+credentials.json
+secrets.yaml 
