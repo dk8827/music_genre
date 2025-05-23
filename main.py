@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     # Train the model
     print("Starting model training...")
-    history = classifier.train_model(X_data, y_data, epochs=30, batch_size=32)
+    history = classifier.train_model(X_data, y_data, epochs=10, batch_size=32)
 
     # Save the trained model and metadata
     classifier.save_model()
