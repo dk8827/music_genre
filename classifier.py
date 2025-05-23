@@ -12,7 +12,23 @@ from plotting_utils import visualize_augmentations_standalone, visualize_segment
 from augmentation_layers import _create_tf_augmentation_layers 
 
 class MusicGenreClassifier:
+    """
+    Main class for music genre classification.
+
+    Orchestrates audio processing, data management, model training, and prediction.
+    Handles model saving and loading, including necessary metadata.
+    """
     def __init__(self, data_path="music_data", n_mels=128, n_fft=2048, hop_length=512, segment_length=4):
+        """
+        Initializes the classifier with audio processing parameters and data paths.
+
+        Args:
+            data_path (str): Path to the root directory containing music data.
+            n_mels (int): Number of Mel bands for spectrograms.
+            n_fft (int): FFT window size.
+            hop_length (int): Hop length for STFT.
+            segment_length (int): Length of audio segments in seconds for feature extraction.
+        """
         self.data_path = data_path
         self.n_mels = n_mels
         self.n_fft = n_fft
@@ -40,10 +56,24 @@ class MusicGenreClassifier:
         print(f"  Cache file: {self.cache_file}")
 
     def create_dataset(self):
+        """Creates or loads the dataset using the DataManager."""
         X, y, self.genres = self.data_manager.create_dataset()
         return X, y
 
     def train_model(self, X, y, epochs=50, batch_size=32, validation_split=0.2):
+        """
+        Trains the genre classification model using the ModelTrainer.
+
+        Args:
+            X (np.ndarray): Input features (spectrograms).
+            y (np.ndarray): Corresponding labels (genre names).
+            epochs (int): Number of training epochs.
+            batch_size (int): Batch size for training.
+            validation_split (float): Fraction of data to use for validation.
+
+        Returns:
+            tensorflow.keras.callbacks.History: Training history object.
+        """
         history, model, train_mean, train_std = self.model_trainer.train_model(
             X, y, epochs, batch_size, validation_split
         )
@@ -54,9 +84,18 @@ class MusicGenreClassifier:
         return history
 
     def _get_metadata_path(self, model_filepath):
+        """Generates the metadata file path from a model file path."""
         return model_filepath.replace(".h5", "_metadata.pkl").replace(".keras", "_metadata.pkl")
 
     def save_model(self, filepath="music_genre_model.keras"):
+        """
+        Saves the trained Keras model and associated metadata.
+
+        Metadata includes label encoder, normalization stats, and audio processing params.
+
+        Args:
+            filepath (str): Path to save the Keras model.
+        """
         if self.model:
             self.model.save(filepath)
             metadata = {
@@ -77,6 +116,15 @@ class MusicGenreClassifier:
             print("No model to save. Train the model first.")
 
     def load_model(self, filepath="music_genre_model.keras"):
+        """
+        Loads a Keras model and its associated metadata.
+
+        Re-initializes internal components (AudioProcessor, DataManager, ModelTrainer)
+        with the loaded parameters to ensure consistency.
+
+        Args:
+            filepath (str): Path to the Keras model file.
+        """
         try:
             self.model = keras.models.load_model(filepath)
             metadata_path = self._get_metadata_path(filepath)
@@ -107,6 +155,21 @@ class MusicGenreClassifier:
             self.model = None
 
     def predict_genre(self, audio_path, use_segments=True, aggregation_method='average'):
+        """
+        Predicts the genre of an audio file.
+
+        Can perform prediction on the full audio or on segments with aggregation.
+
+        Args:
+            audio_path (str): Path to the audio file.
+            use_segments (bool): If True, uses segment-based prediction. Otherwise, uses full audio.
+            aggregation_method (str): Method to aggregate segment predictions ('average', 'majority_vote', etc.).
+                                       Used only if use_segments is True.
+
+        Returns:
+            tuple or None: (genre_name, confidence, prediction_probabilities) or None if error.
+                           If use_segments is True, also returns segment_predictions in the tuple.
+        """
         if self.model is None or self.train_mean is None or self.train_std is None:
             print("Model or normalization stats not loaded. Train or load a model first.")
             return None
@@ -127,6 +190,17 @@ class MusicGenreClassifier:
             return genre, confidence, prediction[0]
 
     def predict_genre_with_segments(self, audio_path, aggregation_method='average'):
+        """
+        Predicts genre by processing audio in segments and aggregating predictions.
+
+        Args:
+            audio_path (str): Path to the audio file.
+            aggregation_method (str): Method to combine segment predictions.
+                Supported: 'average', 'majority_vote', 'max_confidence', 'weighted_average'.
+
+        Returns:
+            tuple or None: (genre_name, confidence, final_prediction_probabilities, segment_raw_predictions) or None.
+        """
         print(f"Predicting genre for: {os.path.basename(audio_path)} using {self.segment_length}s segments, {aggregation_method} aggregation.")
 
         segments_features_list = self.audio_processor.extract_features(audio_path, use_segments=True, sr=DEFAULT_SR)
@@ -166,6 +240,7 @@ class MusicGenreClassifier:
         return genre, confidence, final_prediction_probs, segment_predictions
 
     def compare_aggregation_methods(self, audio_path):
+        """Compares different segment aggregation methods for a given audio file."""
         methods = ['average', 'majority_vote', 'max_confidence', 'weighted_average']
         print(f"Comparing aggregation methods for: {os.path.basename(audio_path)}\n" + "-" * 60)
         results = {}
@@ -183,9 +258,11 @@ class MusicGenreClassifier:
         return results
 
     def clear_cache(self):
+        """Clears the cached processed features file."""
         self.data_manager.clear_cache()
 
     def visualize_augmentations(self, audio_path):
+        """Visualizes various audio augmentations on a sample audio file."""
         visualize_augmentations_standalone(
             audio_path,
             self.audio_processor._create_mel_spectrogram, # Pass the method from audio_processor
@@ -194,6 +271,7 @@ class MusicGenreClassifier:
         )
 
     def visualize_segment_predictions(self, audio_path, max_segments_to_show=10):
+        """Visualizes segment-level predictions and their aggregation for an audio file."""
         print(f"Visualizing segment predictions for: {os.path.basename(audio_path)}")
         result_tuple = self.predict_genre_with_segments(audio_path, aggregation_method='average')
         if not result_tuple: return

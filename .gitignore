@@ -50,3 +50,5 @@ gtzan.tar.gz
 *.env
 credentials.json
 secrets.yaml 
+
+*.keras

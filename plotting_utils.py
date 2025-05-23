@@ -8,9 +8,12 @@ from tensorflow import keras
 from sklearn.metrics import confusion_matrix
 import os
 
-from audio_processor import DEFAULT_SR # Assuming DEFAULT_SR is in config.py
+from audio_processor import DEFAULT_SR # Assuming DEFAULT_SR is in config.py or audio_processor.py
 
 class PlotCallback(keras.callbacks.Callback):
+    """
+    A Keras Callback to plot training and validation accuracy and loss periodically during training.
+    """
     def __init__(self):
         super().__init__()
         self.train_acc = []
@@ -53,6 +56,7 @@ class PlotCallback(keras.callbacks.Callback):
         plt.show()
 
 def plot_final_results(history):
+    """Plots final training and validation accuracy and loss from a Keras History object."""
     plt.figure(figsize=(15, 5))
     plt.subplot(1, 2, 1)
     plt.plot(history.history['accuracy'], label='Training Accuracy')
@@ -69,6 +73,7 @@ def plot_final_results(history):
     plt.tight_layout(); plt.show()
 
 def plot_confusion_matrix_standalone(y_true, y_pred, label_encoder_classes):
+    """Plots a confusion matrix given true labels, predicted labels, and class names."""
     cm = confusion_matrix(y_true, y_pred)
     plt.figure(figsize=(10, 8))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
@@ -78,6 +83,21 @@ def plot_confusion_matrix_standalone(y_true, y_pred, label_encoder_classes):
     plt.show()
 
 def visualize_augmentations_standalone(audio_path, create_mel_spectrogram_func, create_tf_augmentation_layers_func, n_mels, n_fft, hop_length, sr=DEFAULT_SR):
+    """
+    Visualizes the effect of various audio and spectrogram augmentations on a sample audio file.
+
+    Displays original spectrogram and versions with time stretch, pitch shift, noise, 
+    frequency masking, and time masking.
+
+    Args:
+        audio_path (str): Path to the sample audio file.
+        create_mel_spectrogram_func (function): Function to generate Mel spectrograms.
+        create_tf_augmentation_layers_func (function): Function that returns TF-based augmentation ops.
+        n_mels (int): Number of Mel bands.
+        n_fft (int): FFT window size.
+        hop_length (int): Hop length for STFT.
+        sr (int): Sampling rate.
+    """
     print(f"Visualizing augmentations for: {os.path.basename(audio_path)}")
     y_original, _ = librosa.load(audio_path, duration=10, sr=sr)
 
@@ -124,6 +144,17 @@ def visualize_augmentations_standalone(audio_path, create_mel_spectrogram_func, 
     plt.show()
 
 def visualize_segment_predictions_standalone(segment_predictions, final_pred_probs, label_encoder_classes, genre, max_segments_to_show=10):
+    """
+    Visualizes segment-level prediction confidences, distribution of predicted classes across segments,
+    final aggregated probabilities, and a heatmap of segment predictions.
+
+    Args:
+        segment_predictions (np.ndarray): Raw prediction probabilities for each segment (num_segments, num_classes).
+        final_pred_probs (np.ndarray): Aggregated prediction probabilities for the entire audio (num_classes,).
+        label_encoder_classes (list): List of genre names corresponding to class indices.
+        genre (str): The final predicted genre name after aggregation.
+        max_segments_to_show (int): Maximum number of segments to detail in the plots.
+    """
     num_segments_actual = segment_predictions.shape[0]
     num_segments_to_plot = min(num_segments_actual, max_segments_to_show)
     segment_preds_subset = segment_predictions[:num_segments_to_plot]

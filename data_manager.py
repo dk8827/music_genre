@@ -4,7 +4,23 @@ import numpy as np
 from audio_processor import AudioProcessor # Assuming AudioProcessor is in audio_processor.py
 
 class DataManager:
+    """
+    Manages the creation and caching of datasets from audio files.
+
+    Responsible for loading audio data, processing it into features using an AudioProcessor,
+    and saving/loading these features to/from a cache file to speed up subsequent runs.
+    """
     def __init__(self, data_path, cache_file, n_mels, segment_length, audio_processor):
+        """
+        Initializes the DataManager.
+
+        Args:
+            data_path (str): Path to the root directory of the music data.
+            cache_file (str): Filename for storing/retrieving cached features.
+            n_mels (int): Number of Mel bands (used for reshaping loaded data if necessary).
+            segment_length (int): Length of audio segments in seconds.
+            audio_processor (AudioProcessor): Instance of AudioProcessor for feature extraction.
+        """
         self.data_path = data_path
         self.cache_file = cache_file
         self.genres = []
@@ -13,6 +29,18 @@ class DataManager:
         self.audio_processor = audio_processor
 
     def create_dataset(self):
+        """
+        Creates a dataset of features and labels from audio files.
+
+        Attempts to load from cache first. If cache is not found, invalid, or an error occurs,
+        it processes audio files from scratch using `load_audio_dataset` and then caches the result.
+
+        Returns:
+            tuple: (X, y, genres)
+                - X (np.ndarray): Feature data (spectrograms).
+                - y (np.ndarray): Labels (genre names).
+                - genres (list): List of unique genre names found.
+        """
         print("Creating dataset from audio files...")
         if os.path.exists(self.cache_file):
             print("Loading cached features...")
@@ -44,6 +72,19 @@ class DataManager:
         return X, y, self.genres
 
     def load_audio_dataset(self):
+        """
+        Loads audio files from the specified data path, extracts features, and organizes them.
+
+        Iterates through genre subdirectories, processes each audio file into segments
+        (using the provided AudioProcessor), and collects the features (spectrograms)
+        and corresponding genre labels.
+
+        Returns:
+            tuple: (X_np, y_np, current_genres)
+                - X_np (np.ndarray or None): Array of feature matrices (spectrograms).
+                - y_np (np.ndarray or None): Array of genre labels.
+                - current_genres (list): List of genre names processed.
+        """
         start_time = time.time()
         print(f"Loading audio dataset with {self.segment_length}s segments...")
         X_data, y_labels = [], []
@@ -98,6 +139,7 @@ class DataManager:
         return X_np, y_np, current_genres
 
     def clear_cache(self):
+        """Deletes the cache file if it exists."""
         if os.path.exists(self.cache_file):
             try:
                 os.remove(self.cache_file)
